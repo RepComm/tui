@@ -9,6 +9,10 @@ const float m_f_pi = 3.14;
 const float m_f_tau = 6.28;
 const float m_f_piover2 = 1.5707963267948966;
 
+float randomFloat () {
+  return rand() / (float) RAND_MAX;
+}
+
 float m_sin_with_precision (float radians, int steps) {
   //keep radians between -pi and pi
   radians = fmod(radians, m_f_tau)-m_f_pi;

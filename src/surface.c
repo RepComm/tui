@@ -12,7 +12,8 @@ struct Surface {
   int buffersize;
   RectP rect;
   char strokeChar;
-  void (*strokeLine)(SurfaceP surface, Vec2P from, Vec2P to);
+  void (*strokeLine)(SurfaceP surface, float x0, float y0, float x1, float y1);
+  void (*strokeLineVecs)(SurfaceP surface, Vec2P from, Vec2P to);
   void (*strokePixel)(SurfaceP surface, int x, int y);
   void (*clear)(SurfaceP surface);
 };
@@ -61,7 +62,11 @@ void Surface_clear (SurfaceP surface) {
   }
 }
 
-void Surface_strokeLine (SurfaceP surface, Vec2P from, Vec2P to) {
+void Surface_strokeLine (SurfaceP surface, float x0, float y0, float x1, float y1) {
+  bline_ints(surface, x0, y0, x1, y1, (void *) &Surface_strokePixel);
+}
+
+void Surface_strokeLineVecs (SurfaceP surface, Vec2P from, Vec2P to) {
   bline_ints(surface, from->x, from->y, to->x, to->y, (void *) &Surface_strokePixel);
 }
 
@@ -73,6 +78,7 @@ SurfaceP Surface_create (RectP rect, char * buffer, int buffersize) {
 
   result->rect = rect;
   result->strokeLine = &Surface_strokeLine;
+  result->strokeLineVecs = &Surface_strokeLineVecs;
   result->strokeChar = '$';
   result->strokePixel = &Surface_strokePixel;
   result->buffer = buffer;
