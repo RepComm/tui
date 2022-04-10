@@ -4,8 +4,7 @@
 
 #include <time.h>
 #include <stdlib.h>
-
-#include "./boolean.h"
+#include <stdbool.h>
 
 #define TimerP struct Timer *
 struct Timer {
@@ -14,7 +13,6 @@ struct Timer {
   float sLast;
   float sEnlapsed;
   float sNow;
-  void (*step)(TimerP timer);
 };
 
 float getSeconds () {
@@ -32,7 +30,6 @@ TimerP Timer_create () {
   result->sNow = getSeconds();
   result->sLast = result->sNow;
   result->sEnlapsed = result->sNow - result->sLast;
-  result->step = &Timer_step;
   return result;
 }
 
@@ -41,15 +38,11 @@ struct Interval {
   int targetFps;
   float targetEnlapsed;
   float enlapsed;
-  bool (*shouldIterate)(IntervalP interval);
-  void (*calculate)(IntervalP interval, TimerP timer);
 };
 
-void Interval_calculate (IntervalP interval, TimerP timer) {
+bool Interval_calculate (IntervalP interval, TimerP timer) {
   interval->enlapsed += timer->sEnlapsed;
-}
 
-bool Interval_shouldIterate (IntervalP interval) {
   if (interval->enlapsed >= interval->targetEnlapsed) {
     interval->enlapsed = 0;
     return true;
@@ -62,8 +55,6 @@ IntervalP Interval_create (int targetFps) {
 
   result->targetFps = targetFps;
   result->targetEnlapsed = 1.0 / (float) result->targetFps;
-  result->shouldIterate = &Interval_shouldIterate;
-  result->calculate = &Interval_calculate;
 
   return result;
 }

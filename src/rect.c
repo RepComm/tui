@@ -24,7 +24,7 @@ RectP Rect_create () {
 }
 
 bool Rect_destroy (RectP rect) {
-  if (rect == 0) return false;
+  if (rect == NULL) return false;
   Vec2_destroy(rect->position);
   Vec2_destroy(rect->size);
   free(rect);

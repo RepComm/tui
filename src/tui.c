@@ -48,7 +48,7 @@ void TUI_setSize (TUIDataP tui, float width, float height) {
   size->set(size, width, height);
 
   //recalculate screen buffer size/allocate
-  if (tui->screenBuffer != 0) free(tui->screenBuffer);
+  if (tui->screenBuffer != NULL) free(tui->screenBuffer);
 
   tui->screenBufferContentSize = ((int) (width * height));
   //+1 for null terminator
@@ -60,7 +60,7 @@ void TUI_setSize (TUIDataP tui, float width, float height) {
 
   // printf("[TUI] Created screen buffer[%i]\n", tui->screenBufferAllocSize);
 
-  if (tui->surface == 0) {
+  if (tui->surface == NULL) {
     tui->surface = Surface_create(
       tui->rect,
       tui->screenBuffer,

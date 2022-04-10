@@ -2,7 +2,7 @@
 #ifndef ELEMENT_C
 #define ELEMENT_C
 
-#include "./boolean.h"
+#include <stdbool.h>
 #include "./linkedlist.c"
 #include "./rect.c"
 #include "./surface.c"

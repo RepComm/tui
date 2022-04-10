@@ -2,49 +2,44 @@
 #ifndef TERMINAL_C
 #define TERMINAL_C
 
-#include <stdlib.h>
+#include <stdbool.h>
 #include <stdio.h>
-#include "./boolean.h"
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 
 struct Terminal {
-  bool initialized;
-  int (*getWidth)();
-  int (*getHeight)();
-  void (*clear)();
-  int cachedWidth;
-  int cahcedHeight;
+  int width;
+  int height;
 };
-struct Terminal _Terminal_SINGLETON;
+struct Terminal TERMINAL;
 
-int Terminal_getWidth () {
-  char * data = getenv("COLUMNS");
-  if (data == 0) {
-    printf("Could not get columns");
-    exit(-1);
+bool Terminal_ioctl_update_size() {
+  //create a temporary place to store window size
+  struct winsize w;
+  //read size of terminal window into it
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+
+  //check if size changes at all
+  if (TERMINAL.width != w.ws_col ||
+      TERMINAL.height != w.ws_row) {
+
+    printf ("lines %d\n", w.ws_row);
+    printf ("columns %d\n", w.ws_col);
+
+    //update size, mark buffer needs re allocation
+    TERMINAL.width = (int) w.ws_col;
+    TERMINAL.height = (int) w.ws_row;
+
+    return true;
   }
-  return atoi(data);
+  return false;
 }
 
-int Terminal_getHeight (){
-  return atoi(getenv("LINES"));
-}
+void Terminal_clear() { printf("\e[1;1H\e[2J"); }
 
-void Terminal_clear () {
-  printf("\e[1;1H\e[2J");
-}
-
-struct Terminal Terminal_get () {
-  if (!_Terminal_SINGLETON.initialized) {
-    printf("initialized terminal\n");
-    _Terminal_SINGLETON.initialized = true;
-    _Terminal_SINGLETON.clear = &Terminal_clear;
-    _Terminal_SINGLETON.getHeight = &Terminal_getHeight;
-    _Terminal_SINGLETON.getWidth = &Terminal_getWidth;
-
-    _Terminal_SINGLETON.cachedWidth = 80;
-    _Terminal_SINGLETON.cahcedHeight = 40;
-  }
-  return _Terminal_SINGLETON;
+struct Terminal Terminal_get() {
+  return TERMINAL;
 }
 
 #endif

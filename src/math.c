@@ -3,6 +3,7 @@
 #define MATH_C
 
 #include <time.h>
+#include <math.h>
 
 const float m_f_epsilon = 0.00001;
 const float m_f_pi = 3.14;

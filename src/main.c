@@ -1,81 +1,59 @@
 
-#include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
-#include <math.h>
-
-#include "./boolean.h"
-#include "./utils.c"
-
-#include "./tui.c"
+#include <stdbool.h>
 #include "./terminal.c"
+// #include "./tui.c"
 #include "./timer.c"
+#include "./surface.c"
+#include "./rect.c"
+
 
 int main(int argc, char **argv) {
-  //Helps with clear, width and height
-  struct Terminal term = Terminal_get();
-
-  //Create a terminal UI, supplying a clear screen function callback
-  TUIDataP tui = TUI_create(term.clear);
-
-  //Set the size
-  tui->setSize(tui, (float) term.getWidth(), (float) term.getHeight());
-  
-  //Render to its screen buffer (char *)
-  tui->render(tui);
-
-  //Create two points  
-  Vec2P from = Vec2_create();
-  Vec2P to = Vec2_create();
-  to->set(to, 20, 5);
-
-  tui->surface->strokeChar = '#';
 
   TimerP timer = Timer_create();
-  bool doDrawLoop = true;
+  IntervalP interval = Interval_create(5);
 
-  IntervalP interval = Interval_create(1);
+  bool shouldLoop = true;
 
-  int iw = term.getWidth();
-  int ih = term.getHeight();
+  SurfaceP canvas = Surface_create();
 
-  while (doDrawLoop) {
-    timer->step(timer);
-    interval->calculate(interval, timer);
+  //continuous loop
+  while (shouldLoop) {
 
-    if (interval->shouldIterate(interval)) {
-      tui->surface->clear(tui->surface);
+    //keep track of time
+    Timer_step(timer);
 
-      tui->clear();
+    //check if its time to render
+    if (Interval_calculate(interval, timer)) {
+      // Terminal_clear();
 
-      float pw = iw/4;
-      float ph = ih/4;
 
-      float left = pw;
-      float right = iw - pw;
-      float top = ph;
-      float bottom = ih - ph;
+      //check if we need to update size
+      if (Terminal_ioctl_update_size()) {
+        // printf ("Size changed to %d by %d\n", TERMINAL.width, TERMINAL.height);
+        Surface_setSize(canvas, (float) TERMINAL.width, (float)TERMINAL.height);
+      }
+      float w = (float) TERMINAL.width;
+      float h = (float) TERMINAL.height;
 
-      // Draw a line to the surface
-      tui->surface->strokeLine(
-        tui->surface,
-        left, top, right, ih/2
+      canvas->strokeLine(canvas, 0.0, 0.0, w, h);
+
+      //printf to canvas built in 'line' utility string variable
+      float textWidth = (float) snprintf(
+        canvas->line,
+        canvas->lineLength,
+        "Width : %d, Height : %d", TERMINAL.width, TERMINAL.height
       );
 
-      tui->surface->strokeLine(
-        tui->surface,
-        right, ih/2, left, bottom
+      //draw canvas->line in center of screen
+      Surface_drawText(
+        canvas, w/2 - textWidth / 2, h/2, canvas->line
       );
 
-      tui->surface->strokeLine(
-        tui->surface,
-        left, top, left, bottom
-      );
-
-      //Put the screen buffer onto the terminal (stdout)
-      fwrite(tui->screenBuffer, tui->screenBufferContentSize, 1, stdout);
+      //write buffer to terminal
+      fwrite(canvas->buffer, canvas->buffersize-1, 1, stdout);
       fflush(stdout);
     }
   }
-  return 0;
+
 }

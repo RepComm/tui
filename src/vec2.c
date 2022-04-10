@@ -3,7 +3,7 @@
 #define VEC2_C
 
 #include "./math.c"
-#include "./boolean.h"
+#include <stdbool.h>
 #include <stdlib.h>
 #include <math.h>
 
@@ -75,7 +75,7 @@ Vec2P Vec2_create () {
 }
 
 bool Vec2_destroy (Vec2P vec) {
-  if (vec == 0) return false;
+  if (vec == NULL) return false;
   free(vec);
   return true;
 }

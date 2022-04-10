@@ -2,7 +2,7 @@
 #ifndef LINKEDLIST_C
 #define LINKEDLIST_C
 
-#include "./boolean.h"
+#include <stdbool.h>
 
 struct lln {
   void * value;
