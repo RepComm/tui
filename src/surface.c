@@ -7,6 +7,7 @@
 #include "./rect.c"
 #include "./math.c"
 
+#define SurfaceTranslateStackSize 100
 #define SurfaceP struct Surface *
 struct Surface {
   char * buffer;
@@ -24,6 +25,10 @@ struct Surface {
    */
   char * line;
   int lineLength;
+
+  struct Vec2 translateStack[SurfaceTranslateStackSize];
+  int translateStackSize;
+  struct Vec2 translate;
 };
 
 int Surface_pixelToIdx (SurfaceP surface, int x, int y) {
@@ -87,6 +92,9 @@ void Surface_drawText (SurfaceP surface, float x, float y, char * text) {
     idx = Surface_isValidPixel(surface, x+i, y);
     if (idx == -1) break;
 
+    //TODO - check if necessary, probably is in some terminals
+    if (text[i] == '\n') continue;
+
     surface->buffer[idx] = text[i];
   }
 }
@@ -126,6 +134,8 @@ SurfaceP Surface_create () {
 
   result->clear = &Surface_clear;
 
+  result->translateStackSize = 0;
+  Vec2_set(&result->translate, 0.0, 0.0);
   return result;
 }
 
@@ -139,6 +149,47 @@ bool Surface_destroy (SurfaceP surface) {
   if (surface->line != NULL) free(surface->line);
 
   free(surface);
+  return true;
+}
+
+bool Surface_translatePush (SurfaceP surface) {
+  if (surface->translateStackSize+1 > SurfaceTranslateStackSize) return false;
+  Vec2_copy(
+    &surface->translateStack[surface->translateStackSize],
+    &surface->translate
+  );
+  surface->translateStackSize++;
+  return true;
+}
+bool Surface_translatePop (SurfaceP surface) {
+  if (surface->translateStackSize < 1) return false;
+
+  Vec2_copy(
+    &surface->translate,
+    &surface->translateStack[surface->translateStackSize]
+  );
+  surface->translateStackSize--;
+
+  return true;
+}
+
+void Surface_translate (SurfaceP surface, int x, int y) {
+  surface->translate.x += x;
+  surface->translate.y += y;
+}
+
+void Surface_translateByRect (SurfaceP surface, RectP rect) {
+  Surface_translate(surface, rect->position->x, rect->position->y);
+}
+
+void Surface_confine (SurfaceP surface, RectP rect) {
+
+}
+
+bool Surface_isConfined (SurfaceP surface, int x, int y) {
+  return true;
+}
+bool Surface_isHeightConfined (SurfaceP surface, int y) {
   return true;
 }
 

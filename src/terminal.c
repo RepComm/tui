@@ -36,7 +36,10 @@ bool Terminal_ioctl_update_size() {
   return false;
 }
 
-void Terminal_clear() { printf("\e[1;1H\e[2J"); }
+void Terminal_clear() {
+   printf("\e[H\e[2J\e[3J");
+// printf("\e[1;1H\e[2J");
+}
 
 struct Terminal Terminal_get() {
   return TERMINAL;

@@ -106,4 +106,17 @@ int lln_iterate ( llnp node, void (*cb)() ) {
   return counter;
 }
 
+llnp lln_get_at (llnp node, int offset) {
+  llnp cn = node->start;
+
+  int counter = 0;
+
+  while (cn != 0x0) {
+    if (counter == offset) return cn;
+    counter++;
+    cn = cn->next;
+  }
+  return 0;
+}
+
 #endif
