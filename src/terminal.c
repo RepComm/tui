@@ -5,8 +5,15 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#ifdef __linux__  // linux includes
 #include <sys/ioctl.h>
 #include <unistd.h>
+#elif _WIN32  // windows includes
+#include <windows.h>
+#else
+
+#endif
 
 struct Terminal {
   int width;
@@ -14,22 +21,32 @@ struct Terminal {
 };
 struct Terminal TERMINAL;
 
-bool Terminal_ioctl_update_size() {
-  //create a temporary place to store window size
+bool Terminal_update_size() {
+  int width = 0;
+  int height = 0;
+#ifdef __linux__
+  // create a temporary place to store window size
   struct winsize w;
-  //read size of terminal window into it
+  // read size of terminal window into it
   ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
 
-  //check if size changes at all
-  if (TERMINAL.width != w.ws_col ||
-      TERMINAL.height != w.ws_row) {
+  width = (int)w.ws_col;
+  height = (int)w.ws_row;
+#elif _WIN32
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+  int columns, rows;
 
-    printf ("lines %d\n", w.ws_row);
-    printf ("columns %d\n", w.ws_col);
+  GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
+  width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+  height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+#else
+#endif
 
-    //update size, mark buffer needs re allocation
-    TERMINAL.width = (int) w.ws_col;
-    TERMINAL.height = (int) w.ws_row;
+  // check if size changes at all
+  if (TERMINAL.width != width || TERMINAL.height != height) {
+    // update size, mark buffer needs re allocation
+    TERMINAL.width = width;
+    TERMINAL.height = height;
 
     return true;
   }
@@ -37,8 +54,8 @@ bool Terminal_ioctl_update_size() {
 }
 
 void Terminal_clear() {
-   printf("\e[H\e[2J\e[3J");
-// printf("\e[1;1H\e[2J");
+  printf("\e[H\e[2J\e[3J");
+  // printf("\e[1;1H\e[2J");
 }
 
 struct Terminal Terminal_get() {

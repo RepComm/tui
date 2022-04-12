@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
       Terminal_clear();
 
       // check if we need to update size
-      if (Terminal_ioctl_update_size()) {
+      if (Terminal_update_size()) {
         // printf ("Size changed to %d by %d\n", TERMINAL.width,
         // TERMINAL.height);
         Surface_setSize(canvas, (float)TERMINAL.width, (float)TERMINAL.height);
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
       // draw canvas->line in center of screen
       Surface_drawText(canvas, w / 2 - textWidth / 2, h / 2, canvas->line);
 
-      getch
+      
 
       if (editSize > 1) {
         // draw canvas->line in center of screen

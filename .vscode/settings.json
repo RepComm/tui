@@ -13,7 +13,10 @@
     "utility": "c",
     "stdbool.h": "c",
     "boolean.h": "c",
-    "stdlib.h": "c"
+    "stdlib.h": "c",
+    "stdio.h": "c",
+    "windows.h": "c",
+    "winapifamily.h": "c"
   },
   "C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "sameLine",
   "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "sameLine",
