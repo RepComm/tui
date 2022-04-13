@@ -9,6 +9,7 @@
 #include "./timer.c"
 
 int main(int argc, char **argv) {
+  printf("Hello World");
   TimerP timer = Timer_create();
   IntervalP interval = Interval_create(5);
 

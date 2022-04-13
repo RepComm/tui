@@ -179,7 +179,7 @@ void Surface_translate (SurfaceP surface, int x, int y) {
 }
 
 void Surface_translateByRect (SurfaceP surface, RectP rect) {
-  Surface_translate(surface, rect->position->x, rect->position->y);
+  Surface_translate(surface, (int)rect->position->x, (int)rect->position->y);
 }
 
 void Surface_confine (SurfaceP surface, RectP rect) {

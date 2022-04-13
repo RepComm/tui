@@ -34,7 +34,6 @@ bool Terminal_update_size() {
   height = (int)w.ws_row;
 #elif _WIN32
   CONSOLE_SCREEN_BUFFER_INFO csbi;
-  int columns, rows;
 
   GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &csbi);
   width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
@@ -54,7 +53,7 @@ bool Terminal_update_size() {
 }
 
 void Terminal_clear() {
-  printf("\e[H\e[2J\e[3J");
+  // printf("\e[H\e[2J\e[3J");
   // printf("\e[1;1H\e[2J");
 }
 
