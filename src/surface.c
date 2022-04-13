@@ -2,15 +2,18 @@
 #ifndef SURFACE_C
 #define SURFACE_C
 
-#include <string.h>
 #include <stdlib.h>
-#include "./rect.c"
+#include <string.h>
+
 #include "./math.c"
+#include "./rect.c"
+
+#define FONT_RATIO 1.6f
 
 #define SurfaceTranslateStackSize 100
 #define SurfaceP struct Surface *
 struct Surface {
-  char * buffer;
+  char *buffer;
   int buffersize;
   RectP rect;
   RectP rectPrevious;
@@ -23,7 +26,7 @@ struct Surface {
    * A utility variable
    * A string with enough memory to fit in the buffer as a single line
    */
-  char * line;
+  char *line;
   int lineLength;
 
   struct Vec2 translateStack[SurfaceTranslateStackSize];
@@ -31,23 +34,23 @@ struct Surface {
   struct Vec2 translate;
 };
 
-int Surface_pixelToIdx (SurfaceP surface, int x, int y) {
-  //TODO int cast is probably pretty slow
+int Surface_pixelToIdx(SurfaceP surface, int x, int y) {
+  // TODO int cast is probably pretty slow
   float width = surface->rect->size->x;
-  int intWidth = (int) width;
+  int intWidth = (int)width;
 
   // printf("converted float %f to int %i\n", width, intWidth);
-  return m_2dToIndex (x, y, intWidth);
+  return m_2dToIndex(x, y, intWidth);
 }
 
-bool Surface_isValidBufferIndex (SurfaceP surface, int idx) {
+bool Surface_isValidBufferIndex(SurfaceP surface, int idx) {
   return idx > -1 && idx < surface->buffersize;
 }
 
 /**Checks if a pixel is a valid screen buffer pixel
  * If not, returns -1, otherwise, returns the buffer index
  */
-int Surface_isValidPixel (SurfaceP surface, int x, int y) {
+int Surface_isValidPixel(SurfaceP surface, int x, int y) {
   if (x < 0 || y < 0) return -1;
   int idx = Surface_pixelToIdx(surface, x, y);
 
@@ -55,7 +58,7 @@ int Surface_isValidPixel (SurfaceP surface, int x, int y) {
   return -1;
 }
 
-void Surface_strokePixel (SurfaceP surface, int x, int y) {
+void Surface_strokePixel(SurfaceP surface, int x, int y) {
   int idx = Surface_isValidPixel(surface, x, y);
   if (idx == -1) return;
 
@@ -69,30 +72,63 @@ void Surface_strokePixel (SurfaceP surface, int x, int y) {
   surface->buffer[idx] = surface->strokeChar;
 }
 
-void Surface_clear (SurfaceP surface) {
-  for (int i=0; i<surface->buffersize-1; i++) {
+void Surface_clear(SurfaceP surface) {
+  for (int i = 0; i < surface->buffersize - 1; i++) {
     surface->buffer[i] = ' ';
   }
-  surface->buffer[surface->buffersize-1] = 0x00;
+  surface->buffer[surface->buffersize - 1] = 0x00;
 }
 
-void Surface_strokeLine (SurfaceP surface, float x0, float y0, float x1, float y1) {
-  bline_ints(surface, x0, y0, x1, y1, (void *) &Surface_strokePixel);
+void Surface_strokeCircle(SurfaceP surface, float cx, float cy, float radius,
+                          int segments) {
+  float x, y, lx, ly;
+  float percent = 0.0f;
+  float angle = percent * 360.0f;
+  float rads = radians(angle);
+
+  lx = (sinf(rads) * radius) + cx;
+  ly = (cosf(rads) * radius) + cy;
+
+  float fsegments = (float)segments;
+
+  for (float i = 1.0f; i <= fsegments; i += 1.0f) {
+    percent = (i / fsegments);
+    angle = percent * 360;
+    rads = radians(angle);
+
+    x = ((sinf(rads) * radius) * FONT_RATIO) + cx;
+    y = (cosf(rads) * radius) + cy;
+    
+    ///*
+    // Surface_strokeLine(surface, lx, ly, x, y);
+    bline_ints(surface, (int)lx, (int)ly, (int)x, (int)y,
+               (void *)&Surface_strokePixel);
+    //*/
+
+    lx = x;
+    ly = y;
+  }
+}
+void Surface_strokeLine(SurfaceP surface, float x0, float y0, float x1,
+                        float y1) {
+  bline_ints(surface, (int)x0, (int)y0, (int)x1, (int)y1,
+             (void *)&Surface_strokePixel);
 }
 
-void Surface_strokeLineVecs (SurfaceP surface, Vec2P from, Vec2P to) {
-  bline_ints(surface, from->x, from->y, to->x, to->y, (void *) &Surface_strokePixel);
+void Surface_strokeLineVecs(SurfaceP surface, Vec2P from, Vec2P to) {
+  bline_ints(surface, from->x, from->y, to->x, to->y,
+             (void *)&Surface_strokePixel);
 }
 
-void Surface_drawText (SurfaceP surface, float x, float y, char * text) {
+void Surface_drawText(SurfaceP surface, float x, float y, char *text) {
   int textLength = strlen(text);
   int idx = 0;
 
-  for (int i=0; i<textLength; i++) {
-    idx = Surface_isValidPixel(surface, x+i, y);
+  for (int i = 0; i < textLength; i++) {
+    idx = Surface_isValidPixel(surface, x + i, y);
     if (idx == -1) break;
 
-    //TODO - check if necessary, probably is in some terminals
+    // TODO - check if necessary, probably is in some terminals
     if (text[i] == '\n') continue;
 
     surface->buffer[idx] = text[i];
@@ -101,23 +137,23 @@ void Surface_drawText (SurfaceP surface, float x, float y, char * text) {
 
 void Surface_setSize(SurfaceP surface, float w, float h) {
   Rect_copy(surface->rectPrevious, surface->rect);
-  
+
   surface->rect->size->set(surface->rect->size, w, h);
 
-  surface->buffersize = (int) w * (int) h + 1;
+  surface->buffersize = (int)w * (int)h + 1;
   if (surface->buffer == NULL) {
     free(surface->buffer);
   }
-  surface->buffer = (char *) malloc(sizeof(char) * surface->buffersize);
-  
+  surface->buffer = (char *)malloc(sizeof(char) * surface->buffersize);
+
   if (surface->line != NULL) free(surface->line);
-  surface->lineLength = (int) w;
-  surface->line = (char *) malloc(sizeof(char) * surface->lineLength);
+  surface->lineLength = (int)w;
+  surface->line = (char *)malloc(sizeof(char) * surface->lineLength);
 
   Surface_clear(surface);
 }
 
-SurfaceP Surface_create () {
+SurfaceP Surface_create() {
   SurfaceP result = malloc(sizeof(struct Surface));
 
   result->rectPrevious = Rect_create();
@@ -139,58 +175,48 @@ SurfaceP Surface_create () {
   return result;
 }
 
-bool Surface_destroy (SurfaceP surface) {
+bool Surface_destroy(SurfaceP surface) {
   if (surface == NULL) return false;
   free(surface->buffer);
-  
-  Rect_destroy( surface->rect );
-  Rect_destroy( surface->rectPrevious );
-  
+
+  Rect_destroy(surface->rect);
+  Rect_destroy(surface->rectPrevious);
+
   if (surface->line != NULL) free(surface->line);
 
   free(surface);
   return true;
 }
 
-bool Surface_translatePush (SurfaceP surface) {
-  if (surface->translateStackSize+1 > SurfaceTranslateStackSize) return false;
-  Vec2_copy(
-    &surface->translateStack[surface->translateStackSize],
-    &surface->translate
-  );
+bool Surface_translatePush(SurfaceP surface) {
+  if (surface->translateStackSize + 1 > SurfaceTranslateStackSize) return false;
+  Vec2_copy(&surface->translateStack[surface->translateStackSize],
+            &surface->translate);
   surface->translateStackSize++;
   return true;
 }
-bool Surface_translatePop (SurfaceP surface) {
+bool Surface_translatePop(SurfaceP surface) {
   if (surface->translateStackSize < 1) return false;
 
-  Vec2_copy(
-    &surface->translate,
-    &surface->translateStack[surface->translateStackSize]
-  );
+  Vec2_copy(&surface->translate,
+            &surface->translateStack[surface->translateStackSize]);
   surface->translateStackSize--;
 
   return true;
 }
 
-void Surface_translate (SurfaceP surface, int x, int y) {
+void Surface_translate(SurfaceP surface, int x, int y) {
   surface->translate.x += x;
   surface->translate.y += y;
 }
 
-void Surface_translateByRect (SurfaceP surface, RectP rect) {
+void Surface_translateByRect(SurfaceP surface, RectP rect) {
   Surface_translate(surface, (int)rect->position->x, (int)rect->position->y);
 }
 
-void Surface_confine (SurfaceP surface, RectP rect) {
+void Surface_confine(SurfaceP surface, RectP rect) {}
 
-}
-
-bool Surface_isConfined (SurfaceP surface, int x, int y) {
-  return true;
-}
-bool Surface_isHeightConfined (SurfaceP surface, int y) {
-  return true;
-}
+bool Surface_isConfined(SurfaceP surface, int x, int y) { return true; }
+bool Surface_isHeightConfined(SurfaceP surface, int y) { return true; }
 
 #endif

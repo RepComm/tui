@@ -10,23 +10,14 @@ const float m_f_pi = 3.14;
 const float m_f_tau = 6.28;
 const float m_f_piover2 = 1.5707963267948966;
 
+// #define RAND_MAX 32767
+
 float randomFloat () {
   return rand() / (float) RAND_MAX;
 }
 
-float m_sin_with_precision (float radians, int steps) {
-  //keep radians between -pi and pi
-  radians = fmod(radians, m_f_tau)-m_f_pi;
-
-  //https://stackoverflow.com/a/2284929
-  float res=0, pow=radians, fact=1;
-
-  for(int i=0; i<steps; ++i) {
-    res+=pow/fact;
-    pow*=-1*radians*radians;
-    fact*=(2*(i+1))*(2*(i+1)+1);
-  }
-  return res;
+float radians (float deg) {
+  return deg * (m_f_pi / 180.0);
 }
 
 float m_get_seconds () {
@@ -35,10 +26,6 @@ float m_get_seconds () {
   res = ((float) clock()) / CLOCKS_PER_SEC;
 
   return res;
-}
-
-float m_sin (float radians) {
-  return m_sin_with_precision(radians, 10);
 }
 
 /**Linearly interpolate between `from` and `to`
