@@ -3,56 +3,87 @@
 #define CAMERA_C 1
 
 #include "../libs/cglm/cglm.h"
+#include "./transform.c"
 
 struct Camera {
-  mat4 perspectiveMatrix;
+  float fieldOfView;
+  float aspect;
+  float near;
+  float far;
 
-  mat4 modelViewMatrix;
-  
-  mat4 projectionMatrix;
-
+  //view on screen dimensions
   vec4 viewPort;
+  //camera's specs (FOV, etc)
+  mat4 projectionMatrix;
+  
+  struct Transform transform;
 
-  vec3 position;
-  vec3 rotationEuler;
+  // //position of camera
+  // vec3 position;
+  // //rotation of camera
+  // vec3 direction;
+  // //camera's transform (position + rotation)
+  // mat4 viewMatrix;
 
-  mat4 rotationMatrix;
+  //combines transform with camera specs
+  mat4 viewProjMatrix;
+
+  //combines camera with a 3d model's transform context
+  mat4 modelViewProjMatrix;
+
 };
 #define CameraP struct Camera *
 
-void Camera_XYZ (CameraP camera, float x, float y, float z) {
-  // camera->position
-  camera->position[0] = x;
-  camera->position[1] = y;
-  camera->position[2] = z;
+void Camera_setViewPort (CameraP camera, float x, float y, float w, float h) {
+  camera->viewPort[0] = x;
+  camera->viewPort[1] = y;
+  camera->viewPort[2] = w;
+  camera->viewPort[3] = h;
 }
-void Camera_rotateEulerXYZ (CameraP camera, float x, float y, float z) {
-  Camera_rotateEuler(camera, (vec3) {x, y ,z});
+
+void Camera_setFieldOfView (CameraP camera, float fov) {
+  camera->fieldOfView = fov;
 }
-void Camera_rotateEuler (CameraP camera, vec3 euler) {
-  glm_euler(euler, camera->rotationMatrix);
+void Camera_setAspect (CameraP camera, float aspect) {
+  camera->aspect = aspect;
+}
+void Camera_setNearFar (CameraP camera, float near, float far) {
+  camera->near = near;
+  camera->far = far;
+}
+
+//updates view matrix
+void Camera_lookat (CameraP camera, vec3 target) {
+  glm_lookat(camera->transform.position, target, GLM_YUP, camera->transform.modelMatrix);
 }
 
 void Camera_point_project (CameraP camera, vec3 point, vec3 dest) {
-  glm_project(point, camera->projectionMatrix, camera->viewPort, dest);
+  glm_project(point, camera->modelViewProjMatrix, camera->viewPort, dest);
 }
 
-void Camera_update (CameraP camera) {
-  //clear transform (TRS) matrix
-  glm_mat4_identity(camera->modelViewMatrix);
-  //clear rotation matrix
-  glm_mat4_identity(camera->rotationMatrix);
+void Camera_update_viewMatrix (CameraP camera) {
+  Transform_update(&camera->transform);
+  // glm_look(camera->transform.position, camera->transform.rotation, GLM_YUP, camera->transform.modelMatrix);
+}
 
-  //move to camera's position
-  glm_translate(camera->modelViewMatrix, camera->position);
-  //rotate to camera
-  glm_euler(camera->rotationEuler, camera->rotationMatrix);
+void Camera_update_projMatrix (CameraP camera) {
+  glm_perspective(camera->fieldOfView, camera->aspect, camera->near, camera->far, camera->projectionMatrix);
+}
 
-  //combine rotation onto translation
-  glm_mul(camera->modelViewMatrix, camera->rotationMatrix, camera->modelViewMatrix);
+void Camera_update_viewProjMatrix (CameraP camera) {
+  glm_mat4_mul(camera->projectionMatrix, camera->transform.modelMatrix, camera->viewProjMatrix);
+}
 
-  //combine perspective with translation/rotation onto projection matrix
-  glm_mul(camera->perspectiveMatrix, camera->modelViewMatrix, camera->projectionMatrix);
+void Camera_update_modelViewProjMatrix (CameraP camera, mat4 modelMatrix) {
+  glm_mat4_mul(camera->viewProjMatrix, modelMatrix, camera->modelViewProjMatrix);
+}
+
+void Camera_update (CameraP camera, mat4 modelMatrix, bool view, bool proj) {
+  if (view) Camera_update_viewMatrix(camera);
+  if (proj) Camera_update_projMatrix(camera);
+  Camera_update_viewProjMatrix(camera);
+  Camera_update_modelViewProjMatrix(camera, modelMatrix);
+
 }
 
 #endif

@@ -29,28 +29,129 @@ void Mesh_draw(CameraP camera, MeshP mesh, SurfaceP surface) {
                                 mesh->verticies[i + 8]},
                          c);
 
-    surface->strokeLine(surface, a[0], a[1], b[0], b[1]);
-    surface->strokeLine(surface, b[0], b[1], c[0], c[1]);
-    surface->strokeLine(surface, c[0], c[1], a[0], a[1]);
+    if (a[2] > 0.0f && b[2] > 0.0f) surface->strokeLine(surface, a[0], a[1], b[0], b[1]);
+    if (c[2] > 0.0f && b[2] > 0.0f) surface->strokeLine(surface, b[0], b[1], c[0], c[1]);
+    if (a[2] > 0.0f && c[2] > 0.0f) surface->strokeLine(surface, c[0], c[1], a[0], a[1]);
   }
 }
 
 int main(int argc, char **argv) {
-  printf("Hello World");
+  printf("Hello World\n");
 
-  struct Camera cam;
-  Camera_XYZ(&cam, 0.0, 0.0, 0.0);
-  Camera_rotateEulerXYZ(&cam, 0.0, 0.0, 0.0);
+  struct Camera camera;
+  Camera_setAspect(&camera, 1.0f);
+  Camera_setFieldOfView(&camera, 70.0f);
+  Camera_setNearFar(&camera, 0.01f, 100.0f);
+  Camera_setViewPort(&camera, 0.0f, 0.0f, 50.0f, 30.0f);
 
-  Camera_update(&cam);
+  printf("viewport %f %f %f %f\n", camera.viewPort[0], camera.viewPort[1],
+         camera.viewPort[2], camera.viewPort[3]);
+
+  Camera_lookat(&camera, (vec3){3.0f, 2.0f, 0.0f});
+
+  float size = 20.0f;
+  float tileSize = 5.0f;
+
+  int idx = 0;
+  for (float x = 0.0f; x < size; x += tileSize) {
+    for (float y = 0.0f; y < size; y += tileSize) {
+      idx++;
+      idx++;
+      idx++;
+
+      idx++;
+      idx++;
+      idx++;
+
+      idx++;
+      idx++;
+      idx++;
+
+      idx++;
+      idx++;
+      idx++;
+
+      idx++;
+      idx++;
+      idx++;
+
+      idx++;
+      idx++;
+      idx++;
+    }
+  }
 
   struct Mesh mesh;
-  mesh.vertexCount = 9;
-  mesh.verticies = (float[9]) {
-    0.0f, 0.0f, 0.0f,
-    1.0f, 1.0f, 1.0f,
-    0.0f, 1.0f, 1.0f
-  };
+  int vertexCount = idx;
+  printf("allocating %d verts\n", vertexCount);
+  fflush(stdout);
+
+  mesh.verticies = (float *)malloc(sizeof(float) * vertexCount);
+  mesh.vertexCount = vertexCount;
+
+  float halfSize = size/2.0f;
+  idx = 0;
+  for (float x = -halfSize; x < halfSize; x += tileSize) {
+    for (float y = -halfSize; y < halfSize; y += tileSize) {
+      // triangle a
+      /*
+      a----b
+      |   /
+      | /
+      c
+      */
+      mesh.verticies[idx] = x;
+      idx++;
+      mesh.verticies[idx] = 0.0f;
+      idx++;
+      mesh.verticies[idx] = y;
+      idx++;
+
+      mesh.verticies[idx] = x + tileSize;
+      idx++;
+      mesh.verticies[idx] = 0.0f;
+      idx++;
+      mesh.verticies[idx] = y;
+      idx++;
+
+      mesh.verticies[idx] = x + tileSize;
+      idx++;
+      mesh.verticies[idx] = 0.0f;
+      idx++;
+      mesh.verticies[idx] = y + tileSize;
+      idx++;
+
+      // triangle b
+      /*
+           a
+          /|
+        /  |
+      c----b
+      */
+      mesh.verticies[idx] = x + tileSize;
+      idx++;
+      mesh.verticies[idx] = 0.0f;
+      idx++;
+      mesh.verticies[idx] = y;
+      idx++;
+
+      mesh.verticies[idx] = x + tileSize;
+      idx++;
+      mesh.verticies[idx] = 0.0f;
+      idx++;
+      mesh.verticies[idx] = y + tileSize;
+      idx++;
+
+      mesh.verticies[idx] = x;
+      idx++;
+      mesh.verticies[idx] = 0.0f;
+      idx++;
+      mesh.verticies[idx] = y + tileSize;
+      idx++;
+    }
+  }
+
+  Transform_update(&mesh.transform);
 
   TimerP timer = Timer_create();
   int fps = 5;
@@ -64,6 +165,8 @@ int main(int argc, char **argv) {
 
   int renderUpdates = 0;
 
+  float adjust = 0.0f;
+
   // continuous loop
   while (shouldLoop) {
     // keep track of time
@@ -73,6 +176,10 @@ int main(int argc, char **argv) {
     if (Interval_calculate(interval, timer)) {
       Terminal_clear();
       canvas->clear(canvas);
+
+      adjust += 0.1f;
+      camera.transform.position[1] = adjust;
+      Camera_update(&camera, mesh.transform.modelMatrix, true, true);
 
       // check if we need to update size
       if (Terminal_update_size()) {
@@ -97,14 +204,15 @@ int main(int argc, char **argv) {
       float x = w / 2;
       float y = h / 2;
 
-      canvas->strokeChar = 'O';
+      // canvas->strokeChar = 'O';
 
-      canvas->strokeLine(canvas, x, y, x + (handSize * sinf(rads) * FONT_RATIO),
-                         y + (handSize * cosf(rads)));
+      // canvas->strokeLine(canvas, x, y, x + (handSize * sinf(rads) *
+      // FONT_RATIO),
+      //                    y + (handSize * cosf(rads)));
 
-      canvas->strokeChar = '*';
+      // canvas->strokeChar = '*';
 
-      Surface_strokeCircle(canvas, x, y, clockSize, 8);
+      // Surface_strokeCircle(canvas, x, y, clockSize, 8);
 
       // printf to canvas built in 'line' utility string variable
       float textWidth =
@@ -114,14 +222,15 @@ int main(int argc, char **argv) {
 
       renderUpdates++;
       // draw canvas->line in center of screen
-      Surface_drawText(canvas, w / 2 - textWidth / 2, h / 2, canvas->line);
+      // Surface_drawText(canvas, w / 2 - textWidth / 2, h / 2, canvas->line);
 
-      if (editSize > 1) {
-        // draw canvas->line in center of screen
-        Surface_drawText(canvas, w / 2 - textWidth / 2, (h / 2) + 2.0f, edit);
-      }
+      // if (editSize > 1) {
+      //   // draw canvas->line in center of screen
+      //   Surface_drawText(canvas, w / 2 - textWidth / 2, (h / 2) + 2.0f,
+      //   edit);
+      // }
 
-      Mesh_draw(&cam, &mesh, canvas);
+      Mesh_draw(&camera, &mesh, canvas);
 
       // write buffer to terminal
       fwrite(canvas->buffer, canvas->buffersize - 1, 1, stdout);

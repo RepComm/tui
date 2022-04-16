@@ -5,6 +5,8 @@
 struct Mesh {
   float * verticies;
   int vertexCount;
+
+  struct Transform transform;
 };
 #define MeshP struct Mesh *
 
