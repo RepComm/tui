@@ -42,12 +42,12 @@ int main(int argc, char **argv) {
   Camera_setAspect(&camera, 1.0f);
   Camera_setFieldOfView(&camera, 70.0f);
   Camera_setNearFar(&camera, 0.01f, 100.0f);
-  Camera_setViewPort(&camera, 0.0f, 0.0f, 50.0f, 30.0f);
+  Camera_setViewPort(&camera, 0.0f, 0.0f, 50.0f, 50.0f);
 
   printf("viewport %f %f %f %f\n", camera.viewPort[0], camera.viewPort[1],
          camera.viewPort[2], camera.viewPort[3]);
 
-  Camera_lookat(&camera, (vec3){3.0f, 2.0f, 0.0f});
+  // Camera_lookat(&camera, (vec3){3.0f, 2.0f, 0.0f});
 
   float size = 20.0f;
   float tileSize = 5.0f;
@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
       mesh.verticies[idx] = y;
       idx++;
 
-      mesh.verticies[idx] = x + tileSize;
+      mesh.verticies[idx] = x;
       idx++;
       mesh.verticies[idx] = 0.0f;
       idx++;
@@ -230,6 +230,7 @@ int main(int argc, char **argv) {
       //   edit);
       // }
 
+      canvas->strokeChar = '#';
       Mesh_draw(&camera, &mesh, canvas);
 
       // write buffer to terminal
