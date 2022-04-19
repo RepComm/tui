@@ -1,9 +1,8 @@
-# export $COLUMNS
-# export $LINES
-LINES=$(tput lines)
-COLUMNS=$(tput cols)
 
-export LINES
-export COLUMNS
+# restore=$(echo "stty -g $(stty -g)")
+stty -cbreak
 
+echo Running program
 ./demo "$@"
+
+stty -cooked

@@ -10,6 +10,8 @@
 #include "./surface.c"
 #include "./timer.c"
 
+#include "./elements/edit.c"
+
 void Mesh_draw(CameraP camera, MeshP mesh, SurfaceP surface) {
   vec3 a, b, c;
 
@@ -83,8 +85,6 @@ int main(int argc, char **argv) {
 
   struct Mesh mesh;
   int vertexCount = idx;
-  printf("allocating %d verts\n", vertexCount);
-  fflush(stdout);
 
   mesh.verticies = (float *)malloc(sizeof(float) * vertexCount);
   mesh.vertexCount = vertexCount;
@@ -160,8 +160,8 @@ int main(int argc, char **argv) {
   bool shouldLoop = true;
 
   SurfaceP canvas = Surface_create();
-  char edit[100] = "hello world";
-  int editSize = 4;
+  
+  EditP edit = Edit_create();
 
   int renderUpdates = 0;
 
@@ -174,6 +174,13 @@ int main(int argc, char **argv) {
 
     // check if its time to render
     if (Interval_calculate(interval, timer)) {
+
+      if (Terminal_hasInput()) {
+        char c = Terminal_getch();
+        if (c == '`') exit(0);
+        Edit_append(edit, c);
+      }
+
       Terminal_clear();
       canvas->clear(canvas);
 
@@ -224,14 +231,10 @@ int main(int argc, char **argv) {
       // draw canvas->line in center of screen
       // Surface_drawText(canvas, w / 2 - textWidth / 2, h / 2, canvas->line);
 
-      // if (editSize > 1) {
-      //   // draw canvas->line in center of screen
-      //   Surface_drawText(canvas, w / 2 - textWidth / 2, (h / 2) + 2.0f,
-      //   edit);
-      // }
+      Surface_drawText(canvas, w/2 - edit->offset/2, h / 2 + 2.0f, edit->data);
 
-      canvas->strokeChar = '#';
-      Mesh_draw(&camera, &mesh, canvas);
+      // canvas->strokeChar = '#';
+      // Mesh_draw(&camera, &mesh, canvas);
 
       // write buffer to terminal
       fwrite(canvas->buffer, canvas->buffersize - 1, 1, stdout);

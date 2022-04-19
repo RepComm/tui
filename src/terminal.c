@@ -8,8 +8,10 @@
 
 #ifdef __linux__  // linux includes
 #include <sys/ioctl.h>
+#include <termios.h>
 #include <unistd.h>
 #elif _WIN32  // windows includes
+#include <conio.h>
 #include <windows.h>
 #else
 
@@ -55,6 +57,34 @@ bool Terminal_update_size() {
 void Terminal_clear() {
   // printf("\e[H\e[2J\e[3J");
   // printf("\e[1;1H\e[2J");
+}
+
+char Terminal_getch() {
+#ifdef __linux__
+  char buf = 0;
+  struct termios old = {0};
+  if (tcgetattr(0, &old) < 0) perror("tcsetattr()");
+  old.c_lflag &= ~ICANON;
+  old.c_lflag &= ~ECHO;
+  old.c_cc[VMIN] = 1;
+  old.c_cc[VTIME] = 0;
+  if (tcsetattr(0, TCSANOW, &old) < 0) perror("tcsetattr ICANON");
+  if (read(0, &buf, 1) < 0) perror("read()");
+  old.c_lflag |= ICANON;
+  old.c_lflag |= ECHO;
+  if (tcsetattr(0, TCSADRAIN, &old) < 0) perror("tcsetattr ~ICANON");
+  return (buf);
+#elif _WIN32
+  return getch();  // TODO untested
+#else
+
+#endif
+}
+
+bool Terminal_hasInput () {
+  int n;
+  if (ioctl(0, FIONREAD, &n) != 0 || n < 1) return false;
+  return true;
 }
 
 struct Terminal Terminal_get() {
