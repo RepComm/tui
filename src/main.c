@@ -51,6 +51,7 @@ int main(int argc, char **argv) {
   Camera_setNearFar(&camera, 0.01f, 100.0f);
   Camera_setViewPort(&camera, 0.0f, 0.0f, 50.0f, 50.0f);
   camera.transform.position[1] = 5.0f;
+  camera.transform.position[2] = -15.0f;
   camera.transform.rotation[0] = -0.55f;
 
   printf("viewport %f %f %f %f\n", camera.viewPort[0], camera.viewPort[1],
@@ -232,10 +233,10 @@ int main(int argc, char **argv) {
 
       renderUpdates++;
 
-      camera.transform.rotation[1] += 0.05f;
-      // adjust += 0.1f;
-      // camera.transform.position[1] = adjust;
-      
+      // camera.transform.rotation[1] += 0.05f;
+      mesh.transform.rotation[1] += 0.1f;
+      Transform_update(&mesh.transform);
+
       Camera_update(&camera, mesh.transform.modelMatrix, true, true);
 
       canvas->strokeChar = '@';
