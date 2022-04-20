@@ -8,8 +8,8 @@
 struct Camera {
   float fieldOfView;
   float aspect;
-  float near;
-  float far;
+  float zNear;
+  float zFar;
 
   //view on screen dimensions
   vec4 viewPort;
@@ -47,9 +47,9 @@ void Camera_setFieldOfView (CameraP camera, float fov) {
 void Camera_setAspect (CameraP camera, float aspect) {
   camera->aspect = aspect;
 }
-void Camera_setNearFar (CameraP camera, float near, float far) {
-  camera->near = near;
-  camera->far = far;
+void Camera_setNearFar (CameraP camera, float zNear, float zFar) {
+  camera->zNear = zNear;
+  camera->zFar = zFar;
 }
 
 //updates view matrix
@@ -67,7 +67,7 @@ void Camera_update_viewMatrix (CameraP camera) {
 }
 
 void Camera_update_projMatrix (CameraP camera) {
-  glm_perspective(camera->fieldOfView, camera->aspect, camera->near, camera->far, camera->projectionMatrix);
+  glm_perspective(camera->fieldOfView, camera->aspect, camera->zNear, camera->zFar, camera->projectionMatrix);
 }
 
 void Camera_update_viewProjMatrix (CameraP camera) {

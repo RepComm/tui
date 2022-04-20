@@ -12,6 +12,10 @@
 
 #include "./elements/edit.c"
 
+bool isClampedFloat (float input, float min, float max) {
+  return ( input < max && input > min );
+}
+
 void Mesh_draw(CameraP camera, MeshP mesh, SurfaceP surface) {
   vec3 a, b, c;
 
@@ -30,10 +34,11 @@ void Mesh_draw(CameraP camera, MeshP mesh, SurfaceP surface) {
                          (vec3){mesh->verticies[i + 6], mesh->verticies[i + 7],
                                 mesh->verticies[i + 8]},
                          c);
-
-    if (a[2] > 0.0f && b[2] > 0.0f) surface->strokeLine(surface, a[0], a[1], b[0], b[1]);
-    if (c[2] > 0.0f && b[2] > 0.0f) surface->strokeLine(surface, b[0], b[1], c[0], c[1]);
-    if (a[2] > 0.0f && c[2] > 0.0f) surface->strokeLine(surface, c[0], c[1], a[0], a[1]);
+    float minz = 0.0f;
+    float maxz = 1.0f;
+    if (isClampedFloat(a[2], minz, maxz ) && isClampedFloat(b[2], minz, maxz)) surface->strokeLine(surface, a[0], a[1], b[0], b[1]);
+    if (isClampedFloat(c[2], minz, maxz ) && isClampedFloat(b[2], minz, maxz)) surface->strokeLine(surface, b[0], b[1], c[0], c[1]);
+    if (isClampedFloat(a[2], minz, maxz ) && isClampedFloat(c[2], minz, maxz)) surface->strokeLine(surface, c[0], c[1], a[0], a[1]);
   }
 }
 
@@ -45,6 +50,8 @@ int main(int argc, char **argv) {
   Camera_setFieldOfView(&camera, 70.0f);
   Camera_setNearFar(&camera, 0.01f, 100.0f);
   Camera_setViewPort(&camera, 0.0f, 0.0f, 50.0f, 50.0f);
+  camera.transform.position[1] = 5.0f;
+  camera.transform.rotation[0] = -0.55f;
 
   printf("viewport %f %f %f %f\n", camera.viewPort[0], camera.viewPort[1],
          camera.viewPort[2], camera.viewPort[3]);
@@ -154,7 +161,7 @@ int main(int argc, char **argv) {
   Transform_update(&mesh.transform);
 
   TimerP timer = Timer_create();
-  int fps = 5;
+  int fps = 15;
   IntervalP interval = Interval_create(fps);
 
   bool shouldLoop = true;
@@ -175,18 +182,14 @@ int main(int argc, char **argv) {
     // check if its time to render
     if (Interval_calculate(interval, timer)) {
 
-      if (Terminal_hasInput()) {
-        char c = Terminal_getch();
-        if (c == '`') exit(0);
-        Edit_append(edit, c);
-      }
+      // if (Terminal_hasInput()) {
+      //   char c = Terminal_getch();
+      //   if (c == '`') exit(0);
+      //   Edit_append(edit, c);
+      // }
 
       Terminal_clear();
       canvas->clear(canvas);
-
-      adjust += 0.1f;
-      camera.transform.position[1] = adjust;
-      Camera_update(&camera, mesh.transform.modelMatrix, true, true);
 
       // check if we need to update size
       if (Terminal_update_size()) {
@@ -228,13 +231,17 @@ int main(int argc, char **argv) {
                           TERMINAL.height, renderUpdates);
 
       renderUpdates++;
-      // draw canvas->line in center of screen
-      // Surface_drawText(canvas, w / 2 - textWidth / 2, h / 2, canvas->line);
+
+      camera.transform.rotation[1] += 0.05f;
+      // adjust += 0.1f;
+      // camera.transform.position[1] = adjust;
+      
+      Camera_update(&camera, mesh.transform.modelMatrix, true, true);
+
+      canvas->strokeChar = '@';
+      Mesh_draw(&camera, &mesh, canvas);
 
       Surface_drawText(canvas, w/2 - edit->offset/2, h / 2 + 2.0f, edit->data);
-
-      // canvas->strokeChar = '#';
-      // Mesh_draw(&camera, &mesh, canvas);
 
       // write buffer to terminal
       fwrite(canvas->buffer, canvas->buffersize - 1, 1, stdout);

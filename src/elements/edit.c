@@ -2,6 +2,8 @@
 #ifndef EDIT_C
 #define EDIT_C
 
+#include <stdio.h>
+
 struct Edit {
   int maxSize;
   char * data;
@@ -13,6 +15,7 @@ EditP Edit_create () {
   EditP result = (EditP) malloc(sizeof(struct Edit));
   result->maxSize = maxSize;
   result->data = (char *) malloc(sizeof(char) * result->maxSize);
+  memset(result->data, 0x00, maxSize);
   result->offset = 0;
   return result;
 }

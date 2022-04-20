@@ -75,16 +75,22 @@ char Terminal_getch() {
   if (tcsetattr(0, TCSADRAIN, &old) < 0) perror("tcsetattr ~ICANON");
   return (buf);
 #elif _WIN32
-  return getch();  // TODO untested
+  return _getch();  // TODO untested
 #else
 
 #endif
 }
 
 bool Terminal_hasInput () {
+  #ifdef __linux__
   int n;
   if (ioctl(0, FIONREAD, &n) != 0 || n < 1) return false;
   return true;
+  #elif _WIN32
+  return true; //TODO
+  #else
+
+  #endif
 }
 
 struct Terminal Terminal_get() {
